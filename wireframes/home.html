@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Platform - Updated Nav</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+
+    <style type="text/tailwindcss">
+        @theme {
+            /* Airy Blue Delight Palette */
+            --color-cloud-white: #f4f9ff;
+            --color-soft-breeze: #e6f0fa;
+            --color-clear-sky: #cce0f5;
+            --color-delight-blue: #6ba4e9;
+            --color-deep-delight: #4a8bdd;
+            --color-midnight-navy: #1a2b4c;
+
+            --color-airy-50: #f0f6f9;
+            --color-airy-100: #e0edf4;
+            --color-airy-200: #c6dfea;
+            --color-airy-400: #8ebbd4;
+            --color-airy-500: #6ca1be;
+            --color-airy-600: #5487a5;
+            --color-airy-900: #294759;
+            
+            --font-playfair: 'Playfair Display', serif;
+            --font-nunito: 'Nunito', sans-serif;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Gradient Image Backgrounds */
+        .gradient-music   { background-image: url('../frontend/src/assets/gradients/neat_1.png'); }
+        .gradient-business{ background-image: url('../frontend/src/assets/gradients/neat_2.png'); }
+        .gradient-horror  { background-image: url('../frontend/src/assets/gradients/neat_3.png'); }
+        .gradient-sports  { background-image: url('../frontend/src/assets/gradients/neat_4.png'); }
+
+        .event-header {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+    </style>
+</head>
+<body class="bg-cloud-white font-nunito text-slate-800 antialiased selection:bg-clear-sky selection:text-midnight-navy">
+
+    <!-- Navigation -->
+    <nav class="bg-white px-6 py-3 border-b border-soft-breeze sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <a href="#" class="shrink-0 font-playfair text-xl font-bold tracking-wide text-midnight-navy">
+                Kshana 
+            </a>
+
+            <div class="flex-1 max-w-2xl hidden sm:block relative">
+                <input 
+                    type="text" 
+                    placeholder="Search events, organizers, or locations..." 
+                    class="w-full bg-soft-breeze border border-clear-sky text-slate-700 text-sm rounded-full py-2.5 pl-5 pr-12 focus:outline-none focus:border-delight-blue focus:ring-1 focus:ring-delight-blue transition-all placeholder:text-slate-400"
+                >
+                <button class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-delight-blue transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </button>
+            </div>
+
+            <div class="flex items-center gap-6">
+                <ul class="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-600 capitalize">
+                    <li><a href="#" class="hover:text-delight-blue transition-colors">Bookings</a></li>
+                    <li><a href="#" class="hover:text-delight-blue transition-colors">Discover</a></li>
+                    <li><a href="#" class="hover:text-delight-blue transition-colors">Location</a></li>
+                </ul>
+
+                <button class="md:hidden text-slate-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+
+                <div class="w-9 h-9 shrink-0 rounded-full bg-midnight-navy text-white flex items-center justify-center font-bold text-sm shadow-sm cursor-pointer hover:bg-deep-delight transition-colors">
+                    H
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Category Tabs -->
+    <div class="bg-white/80 backdrop-blur-md border-b border-soft-breeze shadow-sm sticky top-[61px] z-40">
+        <div class="max-w-7xl mx-auto">
+            <ul class="flex items-center justify-start md:justify-center gap-8 text-sm font-medium text-slate-500 capitalize overflow-x-auto no-scrollbar px-6 py-3">
+                <li><a href="#" class="whitespace-nowrap hover:text-midnight-navy hover:font-semibold transition-all">Music</a></li>
+                <li><a href="#" class="whitespace-nowrap hover:text-midnight-navy hover:font-semibold transition-all">Comedy</a></li>
+                <li><a href="#" class="whitespace-nowrap hover:text-midnight-navy hover:font-semibold transition-all">Business</a></li>
+                <li><a href="#" class="whitespace-nowrap hover:text-midnight-navy hover:font-semibold transition-all">Horror</a></li>
+                <li><a href="#" class="whitespace-nowrap hover:text-midnight-navy hover:font-semibold transition-all">Sports</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <main class="max-w-7xl mx-auto px-6 py-10 space-y-16">
+
+        <!-- Top Rated Events Section -->
+        <section>
+            <div class="flex items-end justify-between mb-6">
+                <h2 class="font-playfair text-3xl font-semibold text-midnight-navy">Top rated events</h2>
+                <div class="hidden sm:flex gap-2">
+                    <button class="w-8 h-8 rounded-full border border-soft-breeze flex items-center justify-center text-slate-400 hover:bg-white hover:text-delight-blue transition-all">&larr;</button>
+                    <button class="w-8 h-8 rounded-full border border-soft-breeze flex items-center justify-center text-slate-400 hover:bg-white hover:text-delight-blue transition-all">&rarr;</button>
+                </div>
+            </div>
+            
+            <div class="flex overflow-x-auto gap-6 pb-6 pt-2 no-scrollbar snap-x snap-mandatory -mx-6 px-6 sm:mx-0 sm:px-0">
+                
+                <!-- Music Card -->
+                <div class="group shrink-0 w-72 sm:w-80 bg-white rounded-2xl shadow-sm hover:shadow-xl border border-soft-breeze overflow-hidden snap-start transition-all duration-300 cursor-pointer">
+                    <div class="h-48 gradient-music event-header relative overflow-hidden">
+                     
+                        <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-bold text-slate-800 flex items-center gap-1">
+                            ⭐ 4.9
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <p class="text-xs font-semibold text-delight-blue mb-2 uppercase tracking-wider">Music • Oct 24, 8:00 PM</p>
+                        <h3 class="font-playfair text-xl font-semibold text-midnight-navy mb-2 group-hover:text-delight-blue transition-colors line-clamp-1">Symphony under the Stars</h3>
+                        <p class="text-sm text-slate-500 line-clamp-2 mb-4">An unforgettable evening featuring the city orchestra performing classical masterpieces in the open air.</p>
+                        <div class="flex items-center text-xs text-slate-400 gap-1 mt-auto">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            Central Park Amphitheater
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Business Card -->
+                <div class="group shrink-0 w-72 sm:w-80 bg-white rounded-2xl shadow-sm hover:shadow-xl border border-soft-breeze overflow-hidden snap-start transition-all duration-300 cursor-pointer">
+                    <div class="h-48 gradient-business event-header relative overflow-hidden">
+                        <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-bold text-slate-800 flex items-center gap-1">
+                            ⭐ 4.8
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <p class="text-xs font-semibold text-delight-blue mb-2 uppercase tracking-wider">Business • Nov 12, 9:00 AM</p>
+                        <h3 class="font-playfair text-xl font-semibold text-midnight-navy mb-2 group-hover:text-delight-blue transition-colors line-clamp-1">Global Tech Innovators</h3>
+                        <p class="text-sm text-slate-500 line-clamp-2 mb-4">Join industry leaders to discuss the future of AI engineering, smart cities, and scalable web architecture.</p>
+                        <div class="flex items-center text-xs text-slate-400 gap-1 mt-auto">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            TechHub Convention Center
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Horror Card -->
+                <div class="group shrink-0 w-72 sm:w-80 bg-white rounded-2xl shadow-sm hover:shadow-xl border border-soft-breeze overflow-hidden snap-start transition-all duration-300 cursor-pointer">
+                    <div class="h-48 gradient-horror event-header relative overflow-hidden">
+                        <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-bold text-slate-800 flex items-center gap-1">
+                            ⭐ 4.6
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <p class="text-xs font-semibold text-delight-blue mb-2 uppercase tracking-wider">Horror • Oct 31, 11:00 PM</p>
+                        <h3 class="font-playfair text-xl font-semibold text-midnight-navy mb-2 group-hover:text-delight-blue transition-colors line-clamp-1">Midnight Asylum Tour</h3>
+                        <p class="text-sm text-slate-500 line-clamp-2 mb-4">A guided, immersive storytelling experience through the historic and abandoned city asylum.</p>
+                        <div class="flex items-center text-xs text-slate-400 gap-1 mt-auto">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            Blackwood Estate
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sports Card -->
+                <div class="group shrink-0 w-72 sm:w-80 bg-white rounded-2xl shadow-sm hover:shadow-xl border border-soft-breeze overflow-hidden snap-start transition-all duration-300 cursor-pointer">
+                    <div class="h-48 gradient-sports event-header relative overflow-hidden">
+                        <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-bold text-slate-800 flex items-center gap-1">
+                            ⭐ 4.9
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <p class="text-xs font-semibold text-delight-blue mb-2 uppercase tracking-wider">Sports • Nov 05, 6:00 AM</p>
+                        <h3 class="font-playfair text-xl font-semibold text-midnight-navy mb-2 group-hover:text-delight-blue transition-colors line-clamp-1">City Marathon 2026</h3>
+                        <p class="text-sm text-slate-500 line-clamp-2 mb-4">Annual city marathon routing through historic landmarks. Open to all age groups and skill levels.</p>
+                        <div class="flex items-center text-xs text-slate-400 gap-1 mt-auto">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            Downtown Starting Line
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Genre Cards -->
+        <section>
+            <div class="flex items-end justify-between mb-6">
+                <h2 class="font-playfair text-3xl font-semibold text-midnight-navy">The best Genre <span class="text-lg text-slate-400 font-nunito font-normal block sm:inline sm:ml-2">(Based on our category weight)</span></h2>
+            </div>
+            
+            <div class="flex overflow-x-auto gap-6 pb-6 pt-2 no-scrollbar snap-x snap-mandatory -mx-6 px-6 sm:mx-0 sm:px-0">
+                
+                <!-- Music Genre -->
+                <div class="relative group shrink-0 w-64 h-80 bg-gradient-to-br from-clear-sky to-delight-blue rounded-2xl shadow-sm overflow-hidden snap-start cursor-pointer">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10"></div>
+                    <div class="absolute bottom-0 left-0 p-6 z-20 w-full">
+                        <h3 class="font-playfair text-2xl font-bold text-white mb-1">Music</h3>
+                        <div class="w-12 h-1 bg-white/80 mb-3 rounded-full transition-all group-hover:w-full"></div>
+                        <p class="text-sm text-white/90 opacity-0 group-hover:opacity-100 transition-opacity translate-y-4 group-hover:translate-y-0 duration-300">124 active events</p>
+                    </div>
+                </div>
+
+                <!-- Business Genre -->
+                <div class="relative group shrink-0 w-64 h-80 bg-gradient-to-br from-cloud-white to-clear-sky rounded-2xl shadow-sm overflow-hidden snap-start cursor-pointer border border-soft-breeze">
+                    <div class="absolute inset-0 bg-gradient-to-t from-midnight-navy/70 via-transparent to-transparent z-10"></div>
+                    <div class="absolute bottom-0 left-0 p-6 z-20 w-full">
+                        <h3 class="font-playfair text-2xl font-bold text-midnight-navy mb-1">Business</h3>
+                        <div class="w-12 h-1 bg-delight-blue mb-3 rounded-full transition-all group-hover:w-full"></div>
+                        <p class="text-sm text-midnight-navy/80 opacity-0 group-hover:opacity-100 transition-opacity translate-y-4 group-hover:translate-y-0 duration-300">89 active events</p>
+                    </div>
+                </div>
+
+                <!-- Comedy Genre (using deeper blue for variety) -->
+                <div class="relative group shrink-0 w-64 h-80 bg-gradient-to-br from-deep-delight to-delight-blue rounded-2xl shadow-sm overflow-hidden snap-start cursor-pointer">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10"></div>
+                    <div class="absolute bottom-0 left-0 p-6 z-20 w-full">
+                        <h3 class="font-playfair text-2xl font-bold text-white mb-1">Comedy</h3>
+                        <div class="w-12 h-1 bg-white/80 mb-3 rounded-full transition-all group-hover:w-full"></div>
+                        <p class="text-sm text-white/90 opacity-0 group-hover:opacity-100 transition-opacity translate-y-4 group-hover:translate-y-0 duration-300">56 active events</p>
+                    </div>
+                </div>
+
+                <!-- Sports Genre -->
+                <div class="relative group shrink-0 w-64 h-80 bg-gradient-to-br from-delight-blue to-clear-sky rounded-2xl shadow-sm overflow-hidden snap-start cursor-pointer">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent z-10"></div>
+                    <div class="absolute bottom-0 left-0 p-6 z-20 w-full">
+                        <h3 class="font-playfair text-2xl font-bold text-white mb-1">Sports</h3>
+                        <div class="w-12 h-1 bg-white/80 mb-3 rounded-full transition-all group-hover:w-full"></div>
+                        <p class="text-sm text-white/90 opacity-0 group-hover:opacity-100 transition-opacity translate-y-4 group-hover:translate-y-0 duration-300">42 active events</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+</body>
+</html>

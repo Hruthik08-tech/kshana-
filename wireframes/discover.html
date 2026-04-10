@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Discover — Eventful</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;600;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'cloud-white':   '#f4f9ff',
+            'soft-breeze':   '#e6f0fa',
+            'clear-sky':     '#cce0f5',
+            'delight-blue':  '#6ba4e9',
+            'deep-delight':  '#4a8bdd',
+            'midnight-navy': '#1a2b4c',
+          },
+          fontFamily: {
+            display: ['Familjen Grotesk', 'system-ui', 'sans-serif'],
+            body:    ['Work Sans', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+
+  <style>
+    * { font-family: 'Work Sans', system-ui, sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
+    .font-display { font-family: 'Familjen Grotesk', system-ui, sans-serif; }
+
+    html, body { height: 100%; overflow: hidden; background: #f4f9ff; }
+
+    /* ── Layout shells ── */
+    #app { display: flex; flex-direction: column; height: 100vh; }
+    #map-area { display: flex; flex: 1; overflow: hidden; position: relative; }
+    #map { flex: 1; z-index: 0; }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      width: 340px;
+      background: #f4f9ff;
+      border-right: 1px solid #e6f0fa;
+      display: flex;
+      flex-direction: column;
+      z-index: 10;
+      transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);
+      flex-shrink: 0;
+    }
+    #sidebar.closed { transform: translateX(-340px); width: 0; overflow: hidden; }
+
+    /* mobile sidebar overlay */
+    @media (max-width: 640px) {
+      #sidebar {
+        position: absolute;
+        top: 0; left: 0; bottom: 0;
+        width: 85vw;
+        max-width: 320px;
+        box-shadow: 4px 0 24px rgba(26,43,76,0.12);
+      }
+      #sidebar.closed { transform: translateX(-100%); }
+    }
+
+    /* ── Sidebar scrollable list ── */
+    #event-list { flex: 1; overflow-y: auto; padding: 12px; }
+    #event-list::-webkit-scrollbar { width: 3px; }
+    #event-list::-webkit-scrollbar-thumb { background: #cce0f5; border-radius: 99px; }
+
+    /* ── Event card in sidebar ── */
+    .ev-card {
+      background: white;
+      border: 1px solid #e6f0fa;
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+    .ev-card:hover { border-color: #6ba4e9; box-shadow: 0 4px 18px rgba(107,164,233,0.15); transform: translateY(-1px); }
+    .ev-card.active { border-color: #1a2b4c; box-shadow: 0 4px 18px rgba(26,43,76,0.12); }
+
+    /* ── Leaflet popup overrides ── */
+    .leaflet-popup-content-wrapper {
+      border-radius: 14px !important;
+      padding: 0 !important;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(26,43,76,0.18) !important;
+      border: 1px solid #e6f0fa;
+    }
+    .leaflet-popup-content { margin: 0 !important; width: auto !important; }
+    .leaflet-popup-tip { background: white !important; }
+    .leaflet-popup-close-button {
+      color: #1a2b4c !important;
+      font-size: 18px !important;
+      top: 8px !important;
+      right: 10px !important;
+      z-index: 10;
+    }
+
+    /* ── Custom map markers ── */
+    .event-marker {
+      background: #1a2b4c;
+      color: #f4f9ff;
+      border-radius: 20px 20px 20px 4px;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: 'Work Sans', sans-serif;
+      white-space: nowrap;
+      box-shadow: 0 3px 10px rgba(26,43,76,0.3);
+      border: 2px solid white;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+      letter-spacing: 0.01em;
+    }
+    .event-marker:hover, .event-marker.pulse { transform: scale(1.08); background: #4a8bdd; }
+    .event-marker.active { background: #6ba4e9; transform: scale(1.1); }
+
+    .parking-marker {
+      background: white;
+      color: #1a2b4c;
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: 'Work Sans', sans-serif;
+      box-shadow: 0 2px 8px rgba(26,43,76,0.15);
+      border: 1.5px solid #cce0f5;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .parking-marker:hover { border-color: #6ba4e9; }
+
+    /* ── Toggle sidebar button ── */
+    #toggle-btn {
+      position: absolute;
+      top: 14px; left: 14px;
+      z-index: 20;
+      background: white;
+      border: 1px solid #e6f0fa;
+      border-radius: 10px;
+      width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(26,43,76,0.1);
+      transition: all 0.15s ease;
+      color: #1a2b4c;
+    }
+    #toggle-btn:hover { background: #e6f0fa; }
+
+    /* sidebar open → button moves right of sidebar on desktop */
+    @media (min-width: 641px) {
+      #toggle-btn { position: relative; top: auto; left: auto; }
+    }
+
+    /* ── Map controls ── */
+    .leaflet-control-zoom {
+      border: 1px solid #e6f0fa !important;
+      border-radius: 10px !important;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(26,43,76,0.08) !important;
+    }
+    .leaflet-control-zoom a {
+      color: #1a2b4c !important;
+      background: white !important;
+      border: none !important;
+      width: 36px !important;
+      height: 36px !important;
+      line-height: 36px !important;
+      font-size: 16px !important;
+    }
+    .leaflet-control-zoom a:hover { background: #e6f0fa !important; }
+
+    /* ── Animations ── */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in { animation: fadeInUp 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+
+    /* ── Filter chips ── */
+    .filter-chip {
+      padding: 5px 12px;
+      border-radius: 99px;
+      border: 1px solid #cce0f5;
+      background: white;
+      font-size: 11px;
+      font-weight: 600;
+      color: #1a2b4c;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .filter-chip:hover, .filter-chip.active {
+      background: #1a2b4c;
+      border-color: #1a2b4c;
+      color: #f4f9ff;
+    }
+
+    /* ── Parking availability bar ── */
+    .avail-bar { height: 4px; border-radius: 99px; background: #e6f0fa; overflow: hidden; }
+    .avail-fill { height: 100%; border-radius: 99px; transition: width 0.4s ease; }
+  </style>
+</head>
+
+<body>
+<div id="app">
+
+  <!-- ── Nav ─────────────────────────────────────────────────────── -->
+  <nav style="background:white; border-bottom:1px solid #e6f0fa; padding: 10px 16px; display:flex; align-items:center; gap:12px; z-index:30; flex-shrink:0;">
+
+    <!-- sidebar toggle (desktop: in nav; mobile: absolute on map) -->
+    <button id="nav-toggle" onclick="toggleSidebar()"
+      style="width:36px;height:36px;border-radius:9px;border:1px solid #e6f0fa;background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#1a2b4c;transition:background 0.15s;"
+      onmouseover="this.style.background='#e6f0fa'" onmouseout="this.style.background='white'">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+    </button>
+
+    <span style="font-family:'Familjen Grotesk',sans-serif;font-weight:700;color:#1a2b4c;font-size:1.1rem;letter-spacing:-0.01em;">eventful.</span>
+
+    <!-- Search -->
+    <div style="flex:1;max-width:420px;position:relative;">
+      <svg style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:#6ba4e9;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <input type="text" placeholder="Search events or areas…"
+        style="width:100%;background:#f4f9ff;border:1px solid #cce0f5;border-radius:99px;padding:8px 14px 8px 34px;font-size:13px;color:#1a2b4c;outline:none;transition:border 0.15s;"
+        onfocus="this.style.borderColor='#6ba4e9';this.style.boxShadow='0 0 0 3px rgba(107,164,233,0.2)'"
+        onblur="this.style.borderColor='#cce0f5';this.style.boxShadow='none'"
+      />
+    </div>
+
+    <!-- Filter chips -->
+    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;" class="no-scroll">
+      <button class="filter-chip active" onclick="filterCat(this,'all')">All</button>
+      <button class="filter-chip" onclick="filterCat(this,'Music')">🎵 Music</button>
+      <button class="filter-chip" onclick="filterCat(this,'Tech')">💻 Tech</button>
+      <button class="filter-chip" onclick="filterCat(this,'Food & Drink')">🍜 Food</button>
+      <button class="filter-chip" onclick="filterCat(this,'Sports')">⚽ Sports</button>
+      <button class="filter-chip" onclick="filterCat(this,'Art')">🎨 Art</button>
+    </div>
+
+    <!-- Parking toggle -->
+    <button id="parking-btn" onclick="toggleParking()"
+      style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:99px;border:1px solid #cce0f5;background:white;font-size:12px;font-weight:600;color:#1a2b4c;cursor:pointer;white-space:nowrap;transition:all 0.15s;"
+      onmouseover="this.style.borderColor='#6ba4e9'" onmouseout="this.style.borderColor= parkingVisible ? '#1a2b4c' :'#cce0f5'">
+      🅿️ Parking
+    </button>
+  </nav>
+
+  <!-- ── Map + Sidebar ─────────────────────────────────────────── -->
+  <div id="map-area">
+
+    <!-- Sidebar -->
+    <div id="sidebar">
+      <!-- Sidebar header -->
+      <div style="padding:14px 16px 10px;border-bottom:1px solid #e6f0fa;flex-shrink:0;">
+        <p style="font-family:'Familjen Grotesk',sans-serif;font-weight:700;color:#1a2b4c;font-size:1rem;">Nearby Events</p>
+        <p style="font-size:11px;color:#1a2b4c99;font-weight:500;margin-top:2px;" id="event-count">6 events found</p>
+      </div>
+      <!-- Event list -->
+      <div id="event-list"></div>
+    </div>
+
+    <!-- Map -->
+    <div id="map"></div>
+
+  </div>
+</div>
+
+<script>
+// ── Mock data (schema-aligned) ─────────────────────────────────────
+const EVENTS = [
+  { event_id:1, title:'Bangalore Blues Night Vol.12', category:'Music',      rating:4.8, date:'2025-04-19', start_time:'19:00', end_time:'22:30', address:'12 Church St, Shivajinagar', lat:12.9784, lon:77.6090, description:'An intimate evening of live blues with four acts spanning classic Delta and Chicago styles.' },
+  { event_id:2, title:'ReactConf India 2025',          category:'Tech',       rating:4.6, date:'2025-04-22', start_time:'09:00', end_time:'18:00', address:'NIMHANS Convention Centre', lat:12.9404, lon:77.5959, description:'India\'s largest React conference with workshops, talks, and networking.' },
+  { event_id:3, title:'Street Food Carnival',          category:'Food & Drink',rating:4.5,date:'2025-04-20', start_time:'12:00', end_time:'21:00', address:'Cubbon Park, Bengaluru',     lat:12.9763, lon:77.5929, description:'40+ stalls, live cooking demos, and a curated craft beer garden.' },
+  { event_id:4, title:'Premier League Watch Party',    category:'Sports',     rating:4.3, date:'2025-04-20', start_time:'18:30', end_time:'20:30', address:'Indiranagar, 100ft Rd',    lat:12.9784, lon:77.6410, description:'Catch the match live on a 20ft screen with fellow fans.' },
+  { event_id:5, title:'Urban Sketching Walk',          category:'Art',        rating:4.7, date:'2025-04-21', start_time:'07:30', end_time:'10:30', address:'Lalbagh Botanical Garden',  lat:12.9507, lon:77.5848, description:"A guided sketching walk through Lalbagh's heritage sections." },
+  { event_id:6, title:'Indie Dev Meetup',              category:'Tech',       rating:4.4, date:'2025-04-23', start_time:'18:00', end_time:'20:30', address:'Koramangala, 5th Block',   lat:12.9352, lon:77.6245, description:'Side projects, demos, and open-source discussions over pizza.' },
+];
+
+const PARKING = [
+  { id:'p1', name:'Church St Parking',    lat:12.9780, lon:77.6095, total:40, available:12, rate:'₹40/hr' },
+  { id:'p2', name:'Brigade Rd Basement',  lat:12.9720, lon:77.6070, total:60, available:4,  rate:'₹60/hr' },
+  { id:'p3', name:'Cubbon Park Lot',      lat:12.9760, lon:77.5920, total:80, available:35, rate:'₹20/hr' },
+  { id:'p4', name:'Indiranagar Metro P',  lat:12.9790, lon:77.6400, total:100,available:58, rate:'₹30/hr' },
+  { id:'p5', name:'Lalbagh West Gate',    lat:12.9510, lon:77.5840, total:50, available:22, rate:'₹15/hr' },
+];
+
+const CAT_ICONS = { 'Music':'🎵','Tech':'💻','Food & Drink':'🍜','Sports':'⚽','Art':'🎨' };
+
+// ── State ──────────────────────────────────────────────────────────
+let parkingVisible = false;
+let activeCategory = 'all';
+let activeEventId  = null;
+let sidebarOpen    = true;
+
+const eventMarkers  = {};
+const parkingMarkers = {};
+
+// ── Init map ───────────────────────────────────────────────────────
+const map = L.map('map', {
+  center: [12.9600, 77.6080],
+  zoom: 13,
+  zoomControl: true,
+});
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© CartoDB',
+  maxZoom: 19,
+}).addTo(map);
+
+// ── Sidebar toggle ─────────────────────────────────────────────────
+function toggleSidebar() {
+  sidebarOpen = !sidebarOpen;
+  document.getElementById('sidebar').classList.toggle('closed', !sidebarOpen);
+  setTimeout(() => map.invalidateSize(), 360);
+}
+
+// ── Build event marker HTML ────────────────────────────────────────
+function makeEventIcon(ev, active) {
+  return L.divIcon({
+    className: '',
+    html: `<div class="event-marker${active ? ' active' : ''}">${CAT_ICONS[ev.category]||'📍'} ${ev.title.length > 18 ? ev.title.slice(0,18)+'…' : ev.title}</div>`,
+    iconAnchor: [0, 28],
+    popupAnchor: [60, -10],
+  });
+}
+
+// ── Build parking marker HTML ──────────────────────────────────────
+function makeParkingIcon(p) {
+  const pct = Math.round((p.available / p.total) * 100);
+  const color = pct > 40 ? '#22c55e' : pct > 15 ? '#f59e0b' : '#ef4444';
+  return L.divIcon({
+    className: '',
+    html: `<div class="parking-marker" style="border-color:${color}33;">🅿️ <span style="color:${color}">${p.available}</span></div>`,
+    iconAnchor: [20, 20],
+    popupAnchor: [0, -22],
+  });
+}
+
+// ── Event popup HTML ───────────────────────────────────────────────
+function eventPopupHTML(ev) {
+  const pct = Math.round((ev.available / ev.total) * 100);
+  return `
+  <div style="width:260px;font-family:'Work Sans',sans-serif;">
+    <div style="background:linear-gradient(135deg,#cce0f5,#1a2b4c);height:80px;position:relative;display:flex;align-items:center;justify-content:center;">
+      <span style="font-size:2rem;">${CAT_ICONS[ev.category]||'📍'}</span>
+      <span style="position:absolute;top:8px;left:10px;background:rgba(244,249,255,0.95);border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;color:#4a8bdd;text-transform:uppercase;letter-spacing:0.05em;">${ev.category}</span>
+      <span style="position:absolute;top:8px;right:30px;background:rgba(244,249,255,0.95);border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;color:#1a2b4c;display:flex;align-items:center;gap:3px;">⭐ ${ev.rating}</span>
+    </div>
+    <div style="padding:14px;">
+      <p style="font-family:'Familjen Grotesk',sans-serif;font-weight:700;font-size:0.9rem;color:#1a2b4c;margin-bottom:6px;line-height:1.3;">${ev.title}</p>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+        <span style="font-size:11px;color:#1a2b4c99;font-weight:500;">📅 ${ev.date} &nbsp;·&nbsp; ${ev.start_time}–${ev.end_time}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;margin-bottom:10px;">
+        <span style="font-size:11px;color:#6ba4e9;">📍</span>
+        <span style="font-size:11px;color:#1a2b4c99;font-weight:500;">${ev.address}</span>
+      </div>
+      <p style="font-size:11px;color:#1a2b4c80;line-height:1.5;margin-bottom:12px;">${ev.description}</p>
+      <button onclick="openEventDetail(${ev.event_id})"
+        style="width:100%;background:#1a2b4c;color:#f4f9ff;font-family:'Familjen Grotesk',sans-serif;font-weight:600;font-size:12px;padding:10px;border-radius:10px;border:none;cursor:pointer;transition:background 0.15s;"
+        onmouseover="this.style.background='#4a8bdd'" onmouseout="this.style.background='#1a2b4c'">
+        Book Seats →
+      </button>
+    </div>
+  </div>`;
+}
+
+// ── Parking popup HTML ─────────────────────────────────────────────
+function parkingPopupHTML(p) {
+  const pct = Math.round((p.available / p.total) * 100);
+  const color = pct > 40 ? '#22c55e' : pct > 15 ? '#f59e0b' : '#ef4444';
+  const label = pct > 40 ? 'Good availability' : pct > 15 ? 'Filling up' : 'Almost full';
+  return `
+  <div style="width:220px;font-family:'Work Sans',sans-serif;padding:14px;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <div style="width:36px;height:36px;background:#e6f0fa;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🅿️</div>
+      <div>
+        <p style="font-family:'Familjen Grotesk',sans-serif;font-weight:700;font-size:0.8rem;color:#1a2b4c;line-height:1.2;">${p.name}</p>
+        <p style="font-size:10px;color:#1a2b4c80;font-weight:500;">${p.rate}</p>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+      <span style="font-size:11px;font-weight:600;color:#1a2b4c;">${p.available} / ${p.total} slots free</span>
+      <span style="font-size:10px;font-weight:700;color:${color};">${label}</span>
+    </div>
+    <div class="avail-bar">
+      <div class="avail-fill" style="width:${pct}%;background:${color};"></div>
+    </div>
+    <div style="margin-top:10px;padding:8px 10px;background:#f4f9ff;border-radius:8px;border:1px solid #e6f0fa;">
+      <p style="font-size:10px;font-weight:600;color:#1a2b4c99;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px;">Live availability</p>
+      <p style="font-size:11px;font-weight:500;color:#1a2b4c;">Updated just now · refreshes every 60s</p>
+    </div>
+  </div>`;
+}
+
+// ── Place event markers ────────────────────────────────────────────
+function placeEventMarkers() {
+  EVENTS.forEach(ev => {
+    const marker = L.marker([ev.lat, ev.lon], { icon: makeEventIcon(ev, false) }).addTo(map);
+    marker.bindPopup(eventPopupHTML(ev), { maxWidth:280, closeButton:true });
+    marker.on('click', () => setActiveEvent(ev.event_id));
+    eventMarkers[ev.event_id] = { marker, ev };
+  });
+}
+
+// ── Place parking markers ──────────────────────────────────────────
+function placeParkingMarkers() {
+  PARKING.forEach(p => {
+    const marker = L.marker([p.lat, p.lon], { icon: makeParkingIcon(p) });
+    marker.bindPopup(parkingPopupHTML(p), { maxWidth:240, closeButton:true });
+    parkingMarkers[p.id] = marker;
+  });
+}
+
+// ── Toggle parking visibility ──────────────────────────────────────
+function toggleParking() {
+  parkingVisible = !parkingVisible;
+  const btn = document.getElementById('parking-btn');
+  PARKING.forEach(p => {
+    if (parkingVisible) {
+      parkingMarkers[p.id].addTo(map);
+    } else {
+      parkingMarkers[p.id].remove();
+    }
+  });
+  btn.style.background    = parkingVisible ? '#1a2b4c' : 'white';
+  btn.style.color         = parkingVisible ? '#f4f9ff' : '#1a2b4c';
+  btn.style.borderColor   = parkingVisible ? '#1a2b4c' : '#cce0f5';
+}
+
+// ── Set active event ───────────────────────────────────────────────
+function setActiveEvent(id) {
+  // reset previous
+  if (activeEventId && eventMarkers[activeEventId]) {
+    const prev = eventMarkers[activeEventId];
+    prev.marker.setIcon(makeEventIcon(prev.ev, false));
+  }
+  activeEventId = id;
+  const curr = eventMarkers[id];
+  curr.marker.setIcon(makeEventIcon(curr.ev, true));
+  // highlight sidebar card
+  document.querySelectorAll('.ev-card').forEach(c => c.classList.toggle('active', c.dataset.id == id));
+  // scroll sidebar card into view
+  const card = document.querySelector(`.ev-card[data-id="${id}"]`);
+  if (card) card.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+// ── Filter by category ────────────────────────────────────────────
+function filterCat(btn, cat) {
+  activeCategory = cat;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+
+  EVENTS.forEach(ev => {
+    const m = eventMarkers[ev.event_id];
+    if (!m) return;
+    const show = cat === 'all' || ev.category === cat;
+    if (show) m.marker.addTo(map); else m.marker.remove();
+  });
+  renderSidebar();
+}
+
+// ── Render sidebar list ────────────────────────────────────────────
+function renderSidebar() {
+  const filtered = activeCategory === 'all' ? EVENTS : EVENTS.filter(e => e.category === activeCategory);
+  document.getElementById('event-count').textContent = `${filtered.length} event${filtered.length!==1?'s':''} found`;
+
+  const list = document.getElementById('event-list');
+  list.innerHTML = '';
+  filtered.forEach((ev, i) => {
+    const card = document.createElement('div');
+    card.className = 'ev-card fade-in';
+    card.dataset.id = ev.event_id;
+    card.style.animationDelay = `${i * 50}ms`;
+    card.innerHTML = `
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px;">
+        <div style="flex:1;min-width:0;">
+          <span style="font-size:10px;font-weight:700;color:#4a8bdd;text-transform:uppercase;letter-spacing:0.06em;">${ev.category}</span>
+          <p style="font-family:'Familjen Grotesk',sans-serif;font-weight:700;font-size:0.875rem;color:#1a2b4c;line-height:1.3;margin-top:2px;" class="truncate">${ev.title}</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:3px;flex-shrink:0;background:#f4f9ff;padding:4px 8px;border-radius:6px;border:1px solid #e6f0fa;">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="#fbbf24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <span style="font-size:11px;font-weight:700;color:#1a2b4c;">${ev.rating}</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;margin-bottom:4px;">
+        <svg width="12" height="12" fill="none" stroke="#6ba4e9" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        <span style="font-size:11px;color:#1a2b4c80;font-weight:500;">${ev.date} &nbsp;·&nbsp; ${ev.start_time}–${ev.end_time}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;margin-bottom:10px;">
+        <svg width="12" height="12" fill="none" stroke="#6ba4e9" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span style="font-size:11px;color:#1a2b4c80;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ev.address}</span>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="flyToEvent(${ev.event_id})" style="flex:1;padding:7px;border-radius:8px;border:1px solid #cce0f5;background:white;font-size:11px;font-weight:600;color:#1a2b4c;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='#6ba4e9'" onmouseout="this.style.borderColor='#cce0f5'">
+          View on Map
+        </button>
+        <button onclick="openEventDetail(${ev.event_id})" style="flex:1;padding:7px;border-radius:8px;border:none;background:#1a2b4c;font-size:11px;font-weight:600;color:#f4f9ff;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#4a8bdd'" onmouseout="this.style.background='#1a2b4c'">
+          Book →
+        </button>
+      </div>
+    `;
+    card.addEventListener('click', e => {
+      if (e.target.tagName === 'BUTTON') return;
+      flyToEvent(ev.event_id);
+    });
+    list.appendChild(card);
+  });
+}
+
+// ── Fly to event on map ────────────────────────────────────────────
+function flyToEvent(id) {
+  const m = eventMarkers[id];
+  if (!m) return;
+  map.flyTo([m.ev.lat, m.ev.lon], 15, { duration: 0.8 });
+  setActiveEvent(id);
+  setTimeout(() => m.marker.openPopup(), 900);
+}
+
+// ── Open event detail (stub) ───────────────────────────────────────
+function openEventDetail(id) {
+  const ev = EVENTS.find(e => e.event_id === id);
+  if (!ev) return;
+  alert(`Navigating to event detail for:\n"${ev.title}"\n\nIn production this routes to /events/${id}`);
+}
+
+// ── Boot ───────────────────────────────────────────────────────────
+placeEventMarkers();
+placeParkingMarkers();
+renderSidebar();
+</script>
+</body>
+</html>

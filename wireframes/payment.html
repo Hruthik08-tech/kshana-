@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout & Payment</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@600;700&family=Work+Sans:wght@400;500&display=swap');
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-fade-in-up {
+      animation: fadeInUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      opacity: 0;
+    }
+
+    .delay-100 { animation-delay: 100ms; }
+    .delay-200 { animation-delay: 200ms; }
+    .delay-300 { animation-delay: 300ms; }
+
+    /* Strict Typography Scale */
+    .text-display-1 { font-family: 'Familjen Grotesk', sans-serif; font-weight: 700; font-size: 2rem; text-transform: uppercase; letter-spacing: 0.015em; }
+    .text-display-2 { font-family: 'Familjen Grotesk', sans-serif; font-weight: 600; font-size: 1.5rem; }
+    .text-heading   { font-family: 'Familjen Grotesk', sans-serif; font-weight: 600; font-size: 1.125rem; }
+    .text-body      { font-family: 'Work Sans', sans-serif; font-weight: 400; font-size: 1rem; }
+    .text-label     { font-family: 'Work Sans', sans-serif; font-weight: 500; font-size: 0.875rem; }
+    .text-caption   { font-family: 'Work Sans', sans-serif; font-weight: 500; font-size: 0.75rem; font-variant-numeric: tabular-nums; }
+    
+    .font-tabular { font-variant-numeric: tabular-nums; }
+
+    /* Custom Ticket Cutout Effect */
+    .ticket-edge {
+      background: radial-gradient(circle at top right, transparent 12px, #fff 0) top right,
+                  radial-gradient(circle at top left, transparent 12px, #fff 0) top left,
+                  radial-gradient(circle at bottom right, transparent 12px, #fff 0) bottom right,
+                  radial-gradient(circle at bottom left, transparent 12px, #fff 0) bottom left;
+      background-size: 50% 50%;
+      background-repeat: no-repeat;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .animate-spin-slow {
+      animation: spin 1.5s linear infinite;
+    }
+  </style>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'cloud-white': '#f4f9ff',
+            'soft-breeze': '#e6f0fa',
+            'clear-sky': '#cce0f5',
+            'delight-blue': '#6ba4e9',
+            'deep-delight': '#4a8bdd',
+            'midnight-navy': '#1a2b4c',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-cloud-white text-midnight-navy min-h-screen flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+
+  <main class="max-w-md w-full mx-auto relative">
+
+    <div id="global-timer" class="mb-6 flex items-center justify-between bg-soft-breeze px-4 py-3 border-l-4 border-delight-blue animate-fade-in-up">
+      <span class="text-label text-midnight-navy/80">Seat lock expires in</span>
+      <span id="timer-display" class="text-heading font-tabular text-midnight-navy">02:00</span>
+    </div>
+    
+    <div id="state-checkout" class="space-y-8 block">
+      <header class="animate-fade-in-up space-y-1">
+        <h1 class="text-display-2" id="event-title-display">Event Title</h1>
+        <p class="text-body text-midnight-navy/70">Order Summary</p>
+      </header>
+
+      <section class="animate-fade-in-up delay-100 bg-white border border-clear-sky p-6 space-y-6">
+        <div class="flex justify-between items-end border-b border-soft-breeze pb-4">
+          <div>
+            <p class="text-caption text-midnight-navy/60 uppercase tracking-wider mb-1">Selected Seat</p>
+            <p class="text-display-1 text-midnight-navy" id="seat-label-display">--</p>
+          </div>
+          <div class="text-right">
+            <p class="text-caption text-midnight-navy/60 uppercase tracking-wider mb-1">Total Due</p>
+            <p class="text-display-2 text-midnight-navy" id="payment-amount-display">$0.00</p>
+          </div>
+        </div>
+        
+        <div class="space-y-2">
+          <p class="text-label text-midnight-navy/80">Guest Information</p>
+          <p class="text-body text-midnight-navy" id="user-name-display">Jane Doe</p>
+        </div>
+      </section>
+
+      <section class="animate-fade-in-up delay-200">
+        <button 
+          onclick="initiatePayment()"
+          class="w-full bg-midnight-navy hover:bg-deep-delight text-cloud-white text-label px-6 py-4 rounded-md transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-cloud-white focus:ring-midnight-navy flex justify-center items-center gap-2"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+          <span>Pay Securely</span>
+        </button>
+      </section>
+    </div>
+
+    <div id="state-processing" class="space-y-8 hidden text-center py-12">
+      <div class="animate-spin-slow inline-block w-12 h-12 border-4 border-clear-sky border-t-delight-blue rounded-full mb-4"></div>
+      <h2 class="text-heading">Processing Payment</h2>
+      <p class="text-body text-midnight-navy/70">Please do not close this window.</p>
+    </div>
+
+    <div id="state-failed" class="space-y-8 hidden">
+      <header class="animate-fade-in-up text-center space-y-4">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-soft-breeze text-midnight-navy mb-2">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <h1 class="text-display-2">Payment Failed</h1>
+        <p class="text-body text-midnight-navy/80">
+          Your transaction could not be completed. Your seat is still reserved while the timer is active.
+        </p>
+      </header>
+      <section class="animate-fade-in-up delay-100">
+        <button 
+          onclick="retryPayment()"
+          class="w-full bg-midnight-navy hover:bg-deep-delight text-cloud-white text-label px-6 py-4 rounded-md transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-cloud-white focus:ring-midnight-navy"
+        >
+          Try Again
+        </button>
+      </section>
+    </div>
+
+    <div id="state-success" class="space-y-6 hidden">
+      <header class="animate-fade-in-up text-center space-y-2 mb-8">
+        <h1 class="text-display-2 text-deep-delight">Booking Confirmed</h1>
+        <p class="text-body text-midnight-navy/80">We've sent a copy to your email.</p>
+      </header>
+
+      <section class="animate-fade-in-up delay-100 ticket-edge border border-clear-sky shadow-sm flex flex-col">
+        <div class="p-6 border-b border-dashed border-clear-sky bg-white">
+          <p class="text-caption text-midnight-navy/60 uppercase tracking-wider mb-2">Admit One</p>
+          <h2 class="text-heading text-midnight-navy" id="ticket-event-title">Event Title</h2>
+          <div class="mt-4 flex justify-between">
+            <div>
+              <p class="text-caption text-midnight-navy/60 uppercase tracking-wider">Seat</p>
+              <p class="text-display-2 text-midnight-navy" id="ticket-seat-label">--</p>
+            </div>
+            <div class="text-right">
+              <p class="text-caption text-midnight-navy/60 uppercase tracking-wider">Guest</p>
+              <p class="text-label text-midnight-navy pt-1" id="ticket-user-name">--</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="p-6 bg-soft-breeze flex flex-col items-center justify-center space-y-4">
+          <div class="bg-white p-2 rounded-sm border border-clear-sky">
+            <canvas id="qr-code-canvas"></canvas>
+          </div>
+          <p class="text-caption text-midnight-navy/60 font-tabular tracking-widest" id="ticket-booking-id">BKG-XXXXXX</p>
+        </div>
+      </section>
+    </div>
+
+  </main>
+
+  <div class="fixed bottom-4 left-0 right-0 flex justify-center gap-4 text-caption text-midnight-navy/40 bg-white/80 py-2">
+    <span class="font-bold">Simulate Payment:</span>
+    <button onclick="triggerPaymentResult('SUCCESS')" class="hover:text-midnight-navy underline">Force Success</button>
+    <button onclick="triggerPaymentResult('FAILED')" class="hover:text-midnight-navy underline">Force Failure</button>
+  </div>
+
+  <script>
+    // Database Schema Mappings
+    const dbContext = {
+      event: { id: 'evt_101', title: 'Global Tech Summit 2026' },
+      seat: { seat_id: 's_982', label: 'A12', status: 'LOCKED' },
+      user: { user_id: 'u_456', name: 'Alex Rivera' },
+      payment: { amount: 150.00, provider: 'Razorpay', status: 'PENDING' },
+      booking: { booking_id: 'bkg_' + Math.floor(Math.random() * 1000000) }
+    };
+
+    // Timer Logic
+    let timeLeft = 120; // 2 minutes in seconds
+    let timerInterval;
+    let paymentSimulationOutcome = 'SUCCESS'; // Used by dev tools
+
+    const timerDisplay = document.getElementById('timer-display');
+    const globalTimerBanner = document.getElementById('global-timer');
+    
+    // States
+    const states = {
+      checkout: document.getElementById('state-checkout'),
+      processing: document.getElementById('state-processing'),
+      failed: document.getElementById('state-failed'),
+      success: document.getElementById('state-success')
+    };
+
+    function populateData() {
+      // Checkout DOM
+      document.getElementById('event-title-display').textContent = dbContext.event.title;
+      document.getElementById('seat-label-display').textContent = dbContext.seat.label;
+      document.getElementById('user-name-display').textContent = dbContext.user.name;
+      document.getElementById('payment-amount-display').textContent = `$${dbContext.payment.amount.toFixed(2)}`;
+      
+      // Ticket DOM
+      document.getElementById('ticket-event-title').textContent = dbContext.event.title;
+      document.getElementById('ticket-seat-label').textContent = dbContext.seat.label;
+      document.getElementById('ticket-user-name').textContent = dbContext.user.name;
+      document.getElementById('ticket-booking-id').textContent = dbContext.booking.booking_id.toUpperCase();
+    }
+
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+      const s = (seconds % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function updateTimer() {
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        globalTimerBanner.innerHTML = `<span class="text-label text-deep-delight font-bold">Lock Expired</span>`;
+        // In reality, redirect to seat selection or show expiry overlay
+        alert("Session expired. Seat has been released.");
+        return;
+      }
+      timeLeft--;
+      timerDisplay.textContent = formatTime(timeLeft);
+    }
+
+    function startTimer() {
+      timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    function showState(stateName) {
+      Object.values(states).forEach(el => {
+        el.classList.add('hidden');
+        el.classList.remove('block');
+      });
+      states[stateName].classList.remove('hidden');
+      states[stateName].classList.add('block');
+    }
+
+    function generateQR() {
+      // Schema strict QR payload
+      const qrPayload = JSON.stringify({
+        booking_id: dbContext.booking.booking_id,
+        title: dbContext.event.title,
+        label: dbContext.seat.label,
+        name: dbContext.user.name
+      });
+
+      new QRious({
+        element: document.getElementById('qr-code-canvas'),
+        value: qrPayload,
+        size: 180,
+        background: '#ffffff',
+        foreground: '#1a2b4c', // midnight-navy
+        level: 'H'
+      });
+    }
+
+    // Actions
+    function initiatePayment() {
+      showState('processing');
+      
+      // Mock network request to payment provider
+      setTimeout(() => {
+        if (paymentSimulationOutcome === 'SUCCESS') {
+          handlePaymentSuccess();
+        } else {
+          handlePaymentFailure();
+        }
+      }, 1500);
+    }
+
+    function handlePaymentSuccess() {
+      dbContext.payment.status = 'SUCCESS';
+      dbContext.seat.status = 'BOOKED';
+      
+      clearInterval(timerInterval); // Stop timer on success
+      globalTimerBanner.classList.add('hidden'); // Hide timer
+      
+      generateQR();
+      showState('success');
+    }
+
+    function handlePaymentFailure() {
+      dbContext.payment.status = 'FAILED';
+      showState('failed');
+      // Timer intentionally left running, user still holds lock
+    }
+
+    function retryPayment() {
+      showState('checkout');
+    }
+
+    // Dev Tool Overrides
+    function triggerPaymentResult(result) {
+      paymentSimulationOutcome = result;
+      initiatePayment();
+    }
+
+    // Init
+    populateData();
+    startTimer();
+  </script>
+</body>
+</html>

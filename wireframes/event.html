@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Event & Seat Booking — Eventful</title>
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;600;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <style type="text/tailwindcss">
+    @theme {
+      --color-cloud-white: #f4f9ff;
+      --color-soft-breeze: #e6f0fa;
+      --color-clear-sky: #cce0f5;
+      --color-delight-blue: #6ba4e9;
+      --color-deep-delight: #4a8bdd;
+      --color-midnight-navy: #1a2b4c;
+      --font-display: 'Familjen Grotesk', system-ui, sans-serif;
+      --font-body: 'Work Sans', system-ui, sans-serif;
+    }
+
+    body { font-family: var(--font-body); }
+    h1, h2, h3, .font-display { font-family: var(--font-display); }
+
+    @keyframes slideUpFade {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes pulseSoft {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.04); opacity: 1; }
+    }
+
+    .animate-in { animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    .animate-fade { animation: fadeIn 0.35s ease-out both; }
+    .delay-1 { animation-delay: 50ms; }
+    .delay-2 { animation-delay: 100ms; }
+    .delay-3 { animation-delay: 150ms; }
+    .delay-4 { animation-delay: 200ms; }
+
+    .glass-card {
+      background: rgba(255,255,255,0.82);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(230, 240, 250, 0.9);
+      box-shadow: 0 12px 30px rgba(26, 43, 76, 0.06);
+    }
+
+    .meta-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(244, 249, 255, 0.92);
+      backdrop-filter: blur(8px);
+    }
+
+    .info-card {
+      background: white;
+      border: 1px solid var(--color-soft-breeze);
+      border-radius: 22px;
+      box-shadow: 0 10px 24px rgba(26, 43, 76, 0.05);
+    }
+
+    .seat {
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      border: 1.5px solid transparent;
+      user-select: none;
+    }
+
+    .seat-open {
+      background: var(--color-soft-breeze);
+      color: var(--color-midnight-navy);
+      border-color: var(--color-clear-sky);
+    }
+    .seat-open:hover {
+      border-color: var(--color-delight-blue);
+      background: var(--color-clear-sky);
+      transform: translateY(-2px);
+    }
+
+    .seat-locked {
+      background: #fef3c7;
+      color: #92400e;
+      border-color: #fde68a;
+      cursor: not-allowed;
+      opacity: 0.85;
+    }
+
+    .seat-booked {
+      background: #f1f5f9;
+      color: #94a3b8;
+      border-color: #e2e8f0;
+      cursor: not-allowed;
+      opacity: 0.65;
+    }
+
+    .seat-selected {
+      background: var(--color-midnight-navy) !important;
+      color: var(--color-cloud-white) !important;
+      border-color: var(--color-midnight-navy) !important;
+      transform: translateY(-2px) scale(1.06);
+      box-shadow: 0 6px 16px rgba(26, 43, 76, 0.22);
+    }
+
+    .stage-glow {
+      background:
+        radial-gradient(circle at center, rgba(107,164,233,0.22) 0%, rgba(107,164,233,0.08) 38%, rgba(107,164,233,0) 68%);
+      animation: pulseSoft 2.8s ease-in-out infinite;
+    }
+
+    .floating-summary {
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(230, 240, 250, 1);
+      box-shadow: 0 -10px 40px rgba(26,43,76,0.08);
+    }
+
+    .hero-bars > div {
+      background: linear-gradient(to top, rgba(107,164,233,0.75), rgba(107,164,233,0.25));
+    }
+
+    ::-webkit-scrollbar { width: 0px; height: 0px; }
+
+    #toast {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: var(--color-midnight-navy);
+      color: var(--color-cloud-white);
+      padding: 12px 24px;
+      border-radius: 999px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 100;
+      white-space: nowrap;
+      box-shadow: 0 8px 30px rgba(26, 43, 76, 0.2);
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+
+<body class="bg-cloud-white min-h-screen text-midnight-navy selection:bg-delight-blue selection:text-white">
+  <div id="toast"></div>
+
+  <!-- DETAILS PAGE -->
+  <div id="page-details" class="block pb-32">
+    <header class="relative overflow-hidden bg-midnight-navy">
+      <nav class="absolute top-0 inset-x-0 z-40 px-5 py-4">
+        <div class="max-w-2xl mx-auto flex items-center justify-between">
+          <button class="w-10 h-10 flex items-center justify-center rounded-full bg-white/12 backdrop-blur-md text-white border border-white/10 hover:bg-white/20 transition-colors cursor-pointer">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          <button class="w-10 h-10 flex items-center justify-center rounded-full bg-white/12 backdrop-blur-md text-white border border-white/10 hover:bg-white/20 transition-colors cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+            </svg>
+          </button>
+        </div>
+      </nav>
+
+      <div class="absolute inset-0 bg-gradient-to-b from-midnight-navy/40 via-midnight-navy/70 to-midnight-navy z-10"></div>
+
+      <div class="absolute bottom-0 left-0 w-full h-40 opacity-20 flex items-end justify-between px-4 gap-1 hero-bars z-0">
+        <div class="w-full h-12 rounded-t-sm"></div>
+        <div class="w-full h-28 rounded-t-sm"></div>
+        <div class="w-full h-18 rounded-t-sm"></div>
+        <div class="w-full h-36 rounded-t-sm"></div>
+        <div class="w-full h-24 rounded-t-sm"></div>
+        <div class="w-full h-14 rounded-t-sm"></div>
+      </div>
+
+      <div class="relative z-20 max-w-2xl mx-auto px-5 pt-24 pb-12">
+        <div class="animate-in delay-1 inline-flex items-center gap-3 mb-5">
+          <span class="bg-deep-delight text-white px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-[0.22em]">
+            Music
+          </span>
+          <span class="flex items-center gap-1.5 text-cloud-white text-sm font-medium">
+            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+            </svg>
+            4.8
+          </span>
+        </div>
+
+        <div class="animate-in delay-2">
+          <h1 class="font-display font-bold text-white text-4xl sm:text-5xl leading-tight tracking-tight">
+            Bangalore Blues Night
+          </h1>
+          <p class="mt-2 text-delight-blue font-display text-xl sm:text-2xl font-semibold">
+            Vol. 12
+          </p>
+        </div>
+
+        <div class="animate-in delay-3 mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="meta-chip">
+            <svg class="w-4 h-4 text-delight-blue shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <span class="text-sm font-medium">Sat, 19 Apr 2025</span>
+          </div>
+
+          <div class="meta-chip">
+            <svg class="w-4 h-4 text-delight-blue shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span class="text-sm font-medium">07:00 PM – 10:30 PM</span>
+          </div>
+
+          <div class="meta-chip">
+            <svg class="w-4 h-4 text-delight-blue shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <span class="text-sm font-medium">Church Street, Bengaluru</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-2xl mx-auto px-5 -mt-6 relative z-30 space-y-5">
+      <section class="glass-card rounded-[28px] p-5 animate-in delay-2">
+        <div class="flex items-start justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-13 h-13 rounded-2xl bg-soft-breeze flex items-center justify-center text-xl shrink-0">🏢</div>
+            <div>
+              <p class="text-[11px] text-midnight-navy/45 font-semibold uppercase tracking-[0.22em] mb-1">Organiser</p>
+              <p class="text-base font-semibold">The Sound Collective</p>
+              <p class="text-sm text-midnight-navy/55">Independent live music curators</p>
+            </div>
+          </div>
+          <button class="text-sm font-semibold text-deep-delight bg-soft-breeze px-4 py-2 rounded-xl hover:bg-clear-sky transition-colors cursor-pointer shrink-0">
+            Follow
+          </button>
+        </div>
+      </section>
+
+      <section class="info-card p-5 animate-in delay-3">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-display font-semibold text-xl">About the Event</h2>
+          <span class="text-[11px] text-midnight-navy/40 font-semibold uppercase tracking-[0.2em]">Intimate live set</span>
+        </div>
+        <p id="desc-text" class="text-sm text-midnight-navy/70 leading-relaxed line-clamp-3 transition-all duration-300">
+          Join us for an intimate evening of live blues at one of Bangalore's most beloved underground venues. Vol. 12 features four acts spanning classic Delta blues, Chicago-style electric, and contemporary indie-blues. Doors open at 6:30 PM. This is a standing-only event with limited capacity — seats in the balcony section must be reserved separately using our seating system.
+        </p>
+        <button onclick="toggleDesc()" id="desc-toggle" class="mt-3 text-sm font-semibold text-deep-delight hover:text-midnight-navy transition-colors cursor-pointer">
+          Read full description
+        </button>
+      </section>
+
+      <section class="info-card overflow-hidden animate-in delay-4">
+        <div id="leaflet-map-container" class="h-48 w-full bg-soft-breeze relative flex items-center justify-center overflow-hidden">
+          <div class="absolute inset-0 opacity-25" style="background-image: radial-gradient(var(--color-deep-delight) 1px, transparent 1px); background-size: 16px 16px;"></div>
+          <div class="absolute w-36 h-36 rounded-full stage-glow"></div>
+          <div class="relative z-10 flex flex-col items-center">
+            <div class="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center mb-2">
+              <svg class="w-6 h-6 text-deep-delight" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </div>
+            <span class="text-xs font-semibold text-deep-delight uppercase tracking-[0.22em]">Venue Preview</span>
+          </div>
+        </div>
+
+        <div class="p-5">
+          <h2 class="font-display font-semibold text-xl mb-3">Location</h2>
+          <div class="flex items-start gap-3">
+            <div class="mt-0.5">
+              <svg class="w-5 h-5 text-deep-delight" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="font-semibold text-sm mb-0.5">The Underground</p>
+              <p class="text-sm text-midnight-navy/60">12, Church Street, Shivajinagar, Bengaluru — 560001</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="fixed bottom-0 left-0 w-full floating-summary p-4 z-50">
+      <div class="max-w-2xl mx-auto flex items-center justify-between gap-4">
+        <div class="hidden sm:block">
+          <p class="text-[11px] text-midnight-navy/45 font-semibold uppercase tracking-[0.22em] mb-1">Balcony Access</p>
+          <p class="font-display font-bold text-2xl leading-none">₹450</p>
+        </div>
+        <button
+          onclick="navigateToSeats()"
+          class="w-full sm:w-auto sm:min-w-[220px] bg-midnight-navy text-white font-display font-bold text-base px-8 py-4 rounded-2xl transition-all duration-200 hover:bg-deep-delight active:scale-[0.98] shadow-md cursor-pointer flex justify-center items-center gap-2"
+        >
+          Select Seats
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEATS PAGE -->
+  <div id="page-seats" class="hidden pb-36 animate-fade min-h-screen bg-cloud-white">
+    <nav class="sticky top-0 z-40 bg-cloud-white/90 backdrop-blur-xl border-b border-soft-breeze px-5 py-4">
+      <div class="max-w-2xl mx-auto flex items-center justify-between">
+        <button onclick="navigateToDetails()" class="flex items-center gap-2 text-midnight-navy/60 hover:text-midnight-navy font-medium text-sm transition-colors cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+          Back
+        </button>
+        <div class="text-right">
+          <p class="font-display font-bold text-midnight-navy leading-none">Seat Selection</p>
+          <p class="text-[11px] text-midnight-navy/45 uppercase tracking-[0.2em] mt-1">Balcony only</p>
+        </div>
+      </div>
+    </nav>
+
+    <main class="max-w-2xl mx-auto px-5 pt-7 space-y-6">
+      <section class="text-center animate-in delay-1">
+        <h1 class="font-display font-bold text-3xl text-midnight-navy mb-2">Choose Your Spot</h1>
+        <p class="text-sm text-midnight-navy/60">Focused booking flow with live seat status and instant summary.</p>
+      </section>
+
+      <section class="info-card p-4 animate-in delay-2">
+        <div class="flex flex-wrap items-center justify-center gap-5 text-[11px] font-semibold text-midnight-navy/70 uppercase tracking-[0.18em]">
+          <div class="flex items-center gap-2.5">
+            <div class="w-3.5 h-3.5 rounded-md bg-soft-breeze border border-clear-sky"></div>
+            Available
+          </div>
+          <div class="flex items-center gap-2.5">
+            <div class="w-3.5 h-3.5 rounded-md bg-[#fef3c7] border border-[#fde68a]"></div>
+            Locked
+          </div>
+          <div class="flex items-center gap-2.5">
+            <div class="w-3.5 h-3.5 rounded-md bg-slate-100 border border-slate-200"></div>
+            Booked
+          </div>
+          <div class="flex items-center gap-2.5">
+            <div class="w-3.5 h-3.5 rounded-md bg-midnight-navy border border-midnight-navy"></div>
+            Yours
+          </div>
+        </div>
+      </section>
+
+      <section class="info-card p-6 sm:p-8 animate-in delay-3">
+        <div class="flex flex-col items-center">
+          <div class="relative w-[88%] h-14 mb-12 flex items-start justify-center">
+            <div class="absolute inset-x-0 top-4 h-10 border-t-4 border-deep-delight rounded-t-[100%] opacity-90"></div>
+            <div class="absolute -top-1 px-5 py-1.5 bg-white rounded-full text-[11px] font-bold text-deep-delight uppercase tracking-[0.22em] border border-soft-breeze shadow-sm">
+              Stage
+            </div>
+            <div class="absolute top-0 w-40 h-20 stage-glow rounded-full pointer-events-none"></div>
+          </div>
+
+          <div id="seat-grid" class="space-y-3.5">
+          </div>
+
+          <div class="mt-8 text-center">
+            <p class="text-[11px] text-midnight-navy/40 uppercase tracking-[0.2em]">
+              Clear aisle split for easier scanning
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="fixed bottom-0 left-0 w-full floating-summary p-4 z-50">
+      <div class="max-w-2xl mx-auto flex items-center justify-between gap-4">
+        <div>
+          <p class="text-[11px] text-midnight-navy/45 font-semibold uppercase tracking-[0.22em] mb-1">
+            Selected Seat
+            <span id="selected-label" class="text-deep-delight font-bold ml-1">None</span>
+          </p>
+          <p id="cta-price" class="font-display font-bold text-3xl leading-none">₹0</p>
+        </div>
+
+        <button
+          id="lock-btn"
+          onclick="lockSeat()"
+          disabled
+          class="bg-midnight-navy text-white font-display font-bold text-base px-10 py-4 rounded-2xl transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-deep-delight active:scale-95 shadow-md flex-1 max-w-[240px]"
+        >
+          Proceed to Pay
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // NAVIGATION LOGIC
+    // ==========================================
+    function navigateToSeats() {
+      document.getElementById('page-details').classList.remove('block');
+      document.getElementById('page-details').classList.add('hidden');
+
+      document.getElementById('page-seats').classList.remove('hidden');
+      document.getElementById('page-seats').classList.add('block');
+      window.scrollTo(0, 0);
+    }
+
+    function navigateToDetails() {
+      document.getElementById('page-seats').classList.remove('block');
+      document.getElementById('page-seats').classList.add('hidden');
+
+      document.getElementById('page-details').classList.remove('hidden');
+      document.getElementById('page-details').classList.add('block');
+      window.scrollTo(0, 0);
+    }
+
+    // ==========================================
+    // SEAT SYSTEM LOGIC
+    // ==========================================
+    const SEAT_PRICE = 450;
+    const ROWS = ['A','B','C','D','E','F'];
+    const COLS = 8;
+    const BOOKED = new Set(['A3','A4','B6','C2','D5','D6','E1','E2','F4','F5']);
+    const LOCKED = new Set(['A6','B3','C5','E5']);
+
+    let selectedSeat = null;
+
+    const grid = document.getElementById('seat-grid');
+    ROWS.forEach(row => {
+      const rowEl = document.createElement('div');
+      rowEl.className = 'flex items-center justify-center gap-4';
+
+      const rowLabel = document.createElement('span');
+      rowLabel.className = 'text-sm font-bold text-midnight-navy/30 w-6 text-right';
+      rowLabel.textContent = row;
+      rowEl.appendChild(rowLabel);
+
+      const seatsWrap = document.createElement('div');
+      seatsWrap.className = 'flex gap-2.5 [&>button:nth-child(4)]:mr-6';
+
+      for (let c = 1; c <= COLS; c++) {
+        const id = `${row}${c}`;
+        const btn = document.createElement('button');
+        btn.className = 'seat';
+        btn.textContent = c;
+        btn.dataset.id = id;
+
+        if (BOOKED.has(id)) {
+          btn.classList.add('seat-booked');
+          btn.disabled = true;
+        } else if (LOCKED.has(id)) {
+          btn.classList.add('seat-locked');
+          btn.disabled = true;
+        } else {
+          btn.classList.add('seat-open');
+          btn.addEventListener('click', () => selectSeat(id, btn));
+        }
+        seatsWrap.appendChild(btn);
+      }
+
+      rowEl.appendChild(seatsWrap);
+      grid.appendChild(rowEl);
+    });
+
+    function selectSeat(id, el) {
+      if (selectedSeat) {
+        const prev = document.querySelector(`[data-id="${selectedSeat}"]`);
+        if (prev) {
+          prev.classList.remove('seat-selected');
+          prev.classList.add('seat-open');
+        }
+      }
+
+      const label = document.getElementById('selected-label');
+      const price = document.getElementById('cta-price');
+      const btn = document.getElementById('lock-btn');
+
+      if (selectedSeat === id) {
+        selectedSeat = null;
+        label.textContent = 'None';
+        price.textContent = '₹0';
+        btn.disabled = true;
+        return;
+      }
+
+      selectedSeat = id;
+      el.classList.remove('seat-open');
+      el.classList.add('seat-selected');
+      label.textContent = id;
+      price.textContent = `₹${SEAT_PRICE}`;
+      btn.disabled = false;
+    }
+
+    function lockSeat() {
+      if (!selectedSeat) return;
+      showToast(`Seat ${selectedSeat} secured. Redirecting to checkout...`);
+
+      const el = document.querySelector(`[data-id="${selectedSeat}"]`);
+      if (el) {
+        el.classList.remove('seat-selected', 'seat-open');
+        el.classList.add('seat-booked');
+        el.disabled = true;
+      }
+
+      selectedSeat = null;
+      document.getElementById('selected-label').textContent = 'None';
+      document.getElementById('cta-price').textContent = '₹0';
+      document.getElementById('lock-btn').disabled = true;
+    }
+
+    // ==========================================
+    // UI UTILITIES
+    // ==========================================
+    let descExpanded = false;
+    function toggleDesc() {
+      descExpanded = !descExpanded;
+      const el = document.getElementById('desc-text');
+      const btn = document.getElementById('desc-toggle');
+
+      if(descExpanded) {
+        el.classList.remove('line-clamp-3');
+        btn.textContent = 'Show less';
+      } else {
+        el.classList.add('line-clamp-3');
+        btn.textContent = 'Read full description';
+      }
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airy Blue Delight - Fluid Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'cloud-white': '#f4f9ff',
+                        'soft-breeze': '#e6f0fa',
+                        'clear-sky': '#cce0f5',
+                        'delight-blue': '#6ba4e9',
+                        'deep-delight': '#4a8bdd',
+                        // The critical anchor for legibility against the moving canvas
+                        'midnight-navy': '#1a2b4c', 
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                        logo: ['Playfair Display', 'serif'],
+                        subtitle: ['Nunito', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&family=Playfair+Display:wght@400;700&display=swap');
+        
+        input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(107, 164, 233, 0.25);
+        }
+        
+        .delay-100 { animation-delay: 100ms; }
+        .delay-200 { animation-delay: 200ms; }
+        .delay-300 { animation-delay: 300ms; }
+    </style>
+</head>
+<body class="bg-cloud-white min-h-screen flex items-center justify-center p-6 font-sans antialiased text-midnight-navy selection:bg-delight-blue selection:text-white overflow-hidden">
+
+    <div class="bg-white rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(107,164,233,0.3)] flex flex-col md:flex-row w-full max-w-5xl overflow-hidden opacity-0 animate-fade-in-up border border-soft-breeze relative z-10">
+        
+        <div class="w-full md:w-1/2 relative overflow-hidden flex flex-col justify-center p-12 min-h-[400px]">
+            <canvas id="gradient" class="absolute inset-0 w-full h-full object-cover"></canvas>
+            
+            <div class="absolute inset-0 bg-white/10 backdrop-blur-[2px]"></div>
+
+            <div class="relative z-10 flex flex-col items-start pointer-events-none">
+          
+                <h2 class="text-4xl font-extrabold tracking-tight text-midnight-navy leading-tight mb-4 drop-shadow-md font-logo opacity-0 animate-fade-in-up delay-100">
+                    Kshana 
+                </h2>
+                <p class="text-midnight-navy/80 text-base max-w-sm font-medium drop-shadow-sm font-subtitle opacity-0 animate-fade-in-up delay-200">
+                "Make your moments now"
+                    
+                </p>
+            </div>
+        </div>
+
+        <div class="w-full md:w-1/2 p-10 sm:p-14 flex flex-col justify-center bg-white z-10 relative">
+            <div class="mb-10 opacity-0 animate-fade-in-up delay-100">
+                <h1 class="text-4xl font-logo  leading-tight mb-4 drop-shadow-md opacity-0 animate-fade-in-up delay-100">
+                    Welcome Back
+                </h1>
+                <p class="text-base font-subtitle  leading-relaxed opacity-0 animate-fade-in-up delay-200">
+                    Sign in to catch the moments happening right now
+                </p>
+            </div>
+
+            <form class="space-y-6" onsubmit="event.preventDefault();">
+                <div class="space-y-2.5 opacity-0 animate-fade-in-up delay-200">
+                    <label for="email" class="block text-sm font-subtitle  uppercase tracking-wider">Email</label>
+                    <div class="relative">
+                        <input type="email" id="email" class="w-full px-4 py-3.5 rounded-xl bg-cloud-white border-2 border-soft-breeze text-midnight-navy placeholder:text-midnight-navy/40 font-medium" placeholder="hello@company.com" required>
+                    </div>
+                </div>
+
+                <div class="space-y-2.5 opacity-0 animate-fade-in-up delay-300">
+                    <div class="flex items-center justify-between">
+                        <label for="password" class="block text-sm font-subtitle  uppercase tracking-wider">Password</label>
+                        <a href="#" class="text-xs font-subtitle text-delight-blue hover:text-deep-delight transition-colors">Forgot password?</a>
+                    </div>
+                    <div class="relative">
+                        <input type="password" id="password" class="w-full px-4 py-3.5 rounded-xl bg-cloud-white border-2 border-soft-breeze text-midnight-navy placeholder:text-midnight-navy/40 font-medium" placeholder="••••••••" required>
+                    </div>
+                </div>
+
+                <div class="pt-4 opacity-0 animate-fade-in-up delay-300">
+                    <button type="submit" class="w-full py-4 px-6 rounded-xl text-white font-bold text-sm tracking-wide bg-gradient-to-r from-delight-blue to-deep-delight hover:from-deep-delight hover:to-delight-blue shadow-[0_10px_25px_-5px_rgba(107,164,233,0.5)] transform hover:-translate-y-0.5 transition-all duration-300 active:translate-y-0 active:shadow-none">
+                        Sign In
+                    </button>
+                </div>
+            </form>
+            
+            <div class="mt-8 text-center text-sm font-medium text-midnight-navy/60 opacity-0 animate-fade-in-up delay-300">
+                Don't have an account? <a href="#" class="font-bold text-delight-blue text-subtitle hover:text-deep-delight transition-colors">Sign up</a>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { NeatGradient } from "https://esm.sh/@firecms/neat";
+
+        // Applying the "Airy Blue Delight" palette to the 3D fluid engine
+        const config = {
+            colors: [
+                { color: '#cce0f5', enabled: true }, // clear-sky
+                { color: '#a1c9f2', enabled: true }, // mid-blue
+                { color: '#6ba4e9', enabled: true }, // delight-blue
+                { color: '#8bbef0', enabled: true }, // softer-delight
+                { color: '#4a8bdd', enabled: true }, // deep-delight
+                { color: '#e6f0fa', enabled: true }, // soft-breeze
+            ],
+            speed: 3,
+            horizontalPressure: 3,
+            verticalPressure: 4,
+            waveFrequencyX: 2,
+            waveFrequencyY: 3,
+            waveAmplitude: 6,
+            shadows: 2, // Slightly increased to give the light blues more depth
+            highlights: 6,
+            colorBrightness: 1.1, // Boosted slightly to keep it airy
+            colorSaturation: 5,
+            wireframe: false,
+            colorBlending: 7,
+            backgroundColor: '#f4f9ff', // cloud-white base
+            backgroundAlpha: 1,
+            resolution: 1,
+            flowDistortionA: 0.4,
+            flowDistortionB: 10,
+            flowScale: 3.3,
+            flowEase: 0.37,
+            flowEnabled: true,
+        };
+
+        // Initialize the gradient on the canvas element
+        const canvasElement = document.getElementById("gradient");
+        if(canvasElement) {
+            const gradient = new NeatGradient({
+                ref: canvasElement,
+                ...config
+            });
+        }
+    </script>
+</body>
+</html>

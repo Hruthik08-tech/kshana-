@@ -1,0 +1,19 @@
+# 1. Ignore everything by default
+/*
+
+# 2. Allow only these folders
+!/app-requirements/
+!/database/
+!/wireframes/
+
+# 3. Allow essential root files
+!/README.md
+!/.gitignore
+
+# 4. CRITICAL: Re-blacklist heavy/private files inside the allowed folders
+**/node_modules/
+**/__pycache__/
+**/.env
+**/.venv/
+.DS_Store
+Thumbs.db

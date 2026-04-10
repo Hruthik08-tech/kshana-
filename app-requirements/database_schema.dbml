@@ -1,0 +1,133 @@
+// ============================================================
+// RDBMS Schema — Event Booking App
+// ============================================================
+
+TABLE users {
+  user_id    INT [pk]
+  name       VARCHAR(200) [not null]
+  email      VARCHAR(200) [unique, not null]
+  password   VARCHAR(255) [not null]
+  created_at TIMESTAMP
+}
+
+TABLE user_preferences {
+  preference_id INT [pk]
+  user_id       INT [ref: > users.user_id, unique]
+  max_distance  DECIMAL [not null, default: 2.0]   // in km, default 2km
+  address       VARCHAR(300)                        // onboarding address, fallback if no live location
+  lat           DECIMAL
+  lon           DECIMAL
+  created_at    TIMESTAMP
+}
+
+TABLE user_preferred_categories {
+  id          INT [pk]
+  user_id     INT [ref: > users.user_id]
+  category_id INT [ref: > categories.category_id]
+
+  indexes {
+    (user_id, category_id) [unique]   // no duplicate preferences
+  }
+}
+
+TABLE categories {
+  category_id     INT [pk]
+  category_name   VARCHAR(200) [unique, not null]
+  category_weight DECIMAL [not null]   // used by baseline worker for scoring
+}
+
+TABLE locations {
+  location_id INT [pk]
+  address     VARCHAR(300) [unique, not null]
+  lat         DECIMAL [not null]
+  lon         DECIMAL [not null]
+}
+
+TABLE organisations {
+  org_id      INT [pk]
+  location_id INT [ref: > locations.location_id]
+  title       VARCHAR(500) [not null]
+  rating      DECIMAL
+  created_at  TIMESTAMP
+}
+
+TABLE events {
+  event_id    INT [pk]
+  org_id      INT [ref: > organisations.org_id]
+  location_id INT [ref: > locations.location_id]
+  title       VARCHAR(500) [not null]
+  description TEXT                      // changed from VARCHAR(500) — allows longer descriptions
+  rating      DECIMAL [not null]
+  price DEIMCAL [not null]
+  date TIMESTAMP [not null]
+  start_time  TIMESTAMP [not null]
+  end_time    TIMESTAMP [not null]
+}
+
+TABLE category_events {
+  category_event_id INT [pk]
+  category_id       INT [ref: > categories.category_id]
+  event_id          INT [ref: > events.event_id]
+
+  indexes {
+    (category_id, event_id) [unique]
+  }
+}
+
+TABLE seats {
+  seat_id      INT [pk]
+  event_id     INT [ref: > events.event_id]
+  label        VARCHAR(10) [not null]                          // e.g. A12
+  status       ENUM('OPEN', 'LOCKED', 'BOOKED') [not null, default: 'OPEN']
+  version      INT [not null, default: 0]                     // optimistic locking
+  locked_until TIMESTAMP                                       // expiry for 2-min lock
+
+  indexes {
+    (event_id, label) [unique]   // seat uniqueness per event
+  }
+}
+
+TABLE bookings {
+  booking_id INT [pk]
+  user_id    INT [ref: > users.user_id]
+  event_id   INT [ref: > events.event_id]
+  seat_id    INT [ref: > seats.seat_id]
+  status     ENUM('PENDING', 'CONFIRMED', 'CANCELLED') [not null]
+  created_at TIMESTAMP [not null]
+
+  indexes {
+    (seat_id) [unique]   // prevents double booking
+  }
+}
+
+TABLE payments {
+  payment_id       INT [pk]
+  user_id          INT [ref: > users.user_id]
+  booking_id       INT [ref: > bookings.booking_id]
+  amount           DECIMAL [not null]
+  status           ENUM('PENDING', 'SUCCESS', 'FAILED') [not null]
+  provider         VARCHAR(100)        // e.g. Razorpay
+  provider_txn_id  VARCHAR(255)        // gateway reference
+  idempotency_key  VARCHAR(255) [unique]   // prevents double payment
+  created_at       TIMESTAMP [not null]
+}
+
+TABLE searchs {
+  search_id   INT [pk]
+  user_id     INT [ref: > users.user_id]
+  category_id INT [ref: > categories.category_id]
+  searched_at TIMESTAMP
+
+  indexes {
+    (user_id, searched_at)   // fast recent-search queries for personalization worker
+  }
+}
+
+TABLE notifications {
+  not_id  INT [pk]
+  user_id INT [ref: > users.user_id]
+  type    ENUM('SUCCESS', 'FAILED', 'WARNING')
+  seen    BOOLEAN
+  send_at TIMESTAMP
+  seen_at TIMESTAMP
+}

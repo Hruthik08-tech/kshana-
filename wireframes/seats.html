@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seat Lock & Checkout</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@600;700&family=Work+Sans:wght@400;500&display=swap');
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-fade-in-up {
+      animation: fadeInUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      opacity: 0;
+    }
+
+    .delay-100 { animation-delay: 100ms; }
+    .delay-200 { animation-delay: 200ms; }
+    .delay-300 { animation-delay: 300ms; }
+
+    /* Strict Typography Scale */
+    .text-display-1 { font-family: 'Familjen Grotesk', sans-serif; font-weight: 700; font-size: 2rem; text-transform: uppercase; letter-spacing: 0.015em; }
+    .text-display-2 { font-family: 'Familjen Grotesk', sans-serif; font-weight: 600; font-size: 1.5rem; }
+    .text-heading   { font-family: 'Familjen Grotesk', sans-serif; font-weight: 600; font-size: 1.125rem; }
+    .text-body      { font-family: 'Work Sans', sans-serif; font-weight: 400; font-size: 1rem; }
+    .text-label     { font-family: 'Work Sans', sans-serif; font-weight: 500; font-size: 0.875rem; }
+    .text-caption   { font-family: 'Work Sans', sans-serif; font-weight: 500; font-size: 0.75rem; font-variant-numeric: tabular-nums; }
+    
+    /* Specific utility for the timer to ensure tabular numbers at a larger size */
+    .font-tabular { font-variant-numeric: tabular-nums; }
+  </style>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'cloud-white': '#f4f9ff',
+            'soft-breeze': '#e6f0fa',
+            'clear-sky': '#cce0f5',
+            'delight-blue': '#6ba4e9',
+            'deep-delight': '#4a8bdd',
+            'midnight-navy': '#1a2b4c',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-cloud-white text-midnight-navy min-h-screen flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+
+  <main class="max-w-md w-full mx-auto relative">
+    
+    <div id="state-active" class="space-y-10 block">
+      <header class="animate-fade-in-up text-center space-y-4">
+        <h1 class="text-heading text-midnight-navy/70">Seat Reserved</h1>
+        <div class="text-display-1 text-midnight-navy py-4 border-y border-soft-breeze">
+          Seat <span id="seat-label-display">A12</span>
+        </div>
+      </header>
+
+      <section class="animate-fade-in-up delay-100 flex flex-col items-center justify-center space-y-2">
+        <span class="text-label text-midnight-navy/60">Time remaining to complete payment</span>
+        <div id="timer-display" class="text-display-2 font-tabular text-midnight-navy">02:00</div>
+      </section>
+
+      <section class="animate-fade-in-up delay-200 pt-4">
+        <button 
+          onclick="proceedToPayment()"
+          class="w-full bg-midnight-navy hover:bg-deep-delight text-cloud-white text-label px-6 py-4 rounded-md transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-cloud-white focus:ring-midnight-navy flex justify-center items-center gap-2"
+        >
+          <span>Proceed to Payment</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+        </button>
+      </section>
+    </div>
+
+    <div id="state-expired" class="space-y-8 hidden">
+      <header class="animate-fade-in-up text-center space-y-4">
+        <h1 class="text-display-2">Time Expired</h1>
+        <p class="text-body text-midnight-navy/80">
+          Your reservation for seat <strong class="font-semibold">A12</strong> has elapsed. The seat has been released back to the public.
+        </p>
+      </header>
+      <section class="animate-fade-in-up delay-100">
+        <button 
+          onclick="goBack()"
+          class="w-full border-2 border-clear-sky hover:border-delight-blue text-midnight-navy text-label px-6 py-4 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-cloud-white focus:ring-delight-blue"
+        >
+          Select Another Seat
+        </button>
+      </section>
+    </div>
+
+    <div id="state-unavailable" class="space-y-8 hidden">
+      <header class="animate-fade-in-up text-center space-y-4">
+        <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-soft-breeze text-midnight-navy mb-2">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        </div>
+        <h1 class="text-display-2">Seat Unavailable</h1>
+        <p class="text-body text-midnight-navy/80">
+          We're sorry. Another user secured seat <strong class="font-semibold">A12</strong> just before you. 
+        </p>
+      </header>
+      <section class="animate-fade-in-up delay-100">
+        <button 
+          onclick="goBack()"
+          class="w-full border-2 border-clear-sky hover:border-delight-blue text-midnight-navy text-label px-6 py-4 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-cloud-white focus:ring-delight-blue"
+        >
+          Select Another Seat
+        </button>
+      </section>
+    </div>
+
+  </main>
+
+  <div class="fixed bottom-4 left-0 right-0 flex justify-center gap-4 text-caption text-midnight-navy/40">
+    <button onclick="triggerRaceCondition()" class="hover:text-midnight-navy underline">Simulate Lost Race Condition</button>
+    <button onclick="triggerExpiry()" class="hover:text-midnight-navy underline">Simulate Timer Expiry</button>
+  </div>
+
+  <script>
+    // Schema-aligned Mock Data
+    const seatData = {
+      seat_id: 's_982',
+      event_id: 'evt_101',
+      label: 'A12',
+      status: 'LOCKED' // Schema allows OPEN/LOCKED/BOOKED
+    };
+
+    let timeLeft = 120; // 2 minutes in seconds
+    let timerInterval;
+
+    const timerDisplay = document.getElementById('timer-display');
+    const stateActive = document.getElementById('state-active');
+    const stateExpired = document.getElementById('state-expired');
+    const stateUnavailable = document.getElementById('state-unavailable');
+
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+      const s = (seconds % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function updateTimer() {
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        showState('expired');
+        // In reality: API call to update seats schema status back to 'OPEN'
+        return;
+      }
+      timeLeft--;
+      timerDisplay.textContent = formatTime(timeLeft);
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timeLeft = 120;
+      timerDisplay.textContent = formatTime(timeLeft);
+      timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    function showState(state) {
+      // Hide all
+      stateActive.classList.add('hidden');
+      stateActive.classList.remove('block');
+      stateExpired.classList.add('hidden');
+      stateExpired.classList.remove('block');
+      stateUnavailable.classList.add('hidden');
+      stateUnavailable.classList.remove('block');
+
+      // Show requested
+      if (state === 'active') {
+        stateActive.classList.remove('hidden');
+        stateActive.classList.add('block');
+        startTimer();
+      } else if (state === 'expired') {
+        stateExpired.classList.remove('hidden');
+        stateExpired.classList.add('block');
+        clearInterval(timerInterval);
+      } else if (state === 'unavailable') {
+        stateUnavailable.classList.remove('hidden');
+        stateUnavailable.classList.add('block');
+        clearInterval(timerInterval);
+      }
+    }
+
+    // Actions
+    function proceedToPayment() {
+      // In reality: transitions to payment flow, preparing `payments` table schema insertion
+      alert(`Proceeding to payment for Seat ${seatData.label}. Initializing payment provider...`);
+    }
+
+    function goBack() {
+      // Restarts demo
+      showState('active');
+    }
+
+    // Dev Simulator Triggers
+    function triggerRaceCondition() {
+      // Simulates websocket/polling response indicating `seats.status` became 'BOOKED' by someone else
+      showState('unavailable');
+    }
+
+    function triggerExpiry() {
+      timeLeft = 1; // speeds up expiry
+    }
+
+    // Initialize
+    startTimer();
+  </script>
+</body>
+</html>
