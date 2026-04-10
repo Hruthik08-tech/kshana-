@@ -1,5 +1,4 @@
 # Ignore all worker services
-worker-*/
 
 # Ignore dependencies and environment files everywhere
 **/node_modules/
